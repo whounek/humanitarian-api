@@ -1,29 +1,37 @@
 package com.mchs.humanitarianapi.controllers;
 
+import com.mchs.humanitarianapi.models.User;
+import com.mchs.humanitarianapi.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/auth")
-@Tag(name = "Управление доступом", description = "Авторизация и распределение ролей сотрудников")
+@Tag(name = "Авторизация", description = "Регистрация и вход сотрудников в систему")
 public class AuthController {
 
-    @PostMapping("/login")
-    @Operation(summary = "Авторизация", description = "Возвращает JWT-токен и данные пользователя (id, role)")
-    public String login() {
-        return "{ \"token\": \"eyJhbG...\", \"role\": \"USER\" }";
+    private final UserService userService;
+
+    public AuthController(UserService userService) {
+        this.userService = userService;
     }
 
     @PostMapping("/register")
-    @Operation(summary = "Регистрация", description = "Регистрация нового сотрудника в системе")
-    public String register() {
-        return "Пользователь успешно зарегистрирован";
+    @Operation(summary = "Регистрация нового сотрудника")
+    public User register(
+            @Parameter(description = "Логин") @RequestParam String username,
+            @Parameter(description = "Пароль") @RequestParam String password,
+            @Parameter(description = "ФИО") @RequestParam String fullName) {
+        return userService.registerUser(username, password, fullName);
     }
 
-    @PostMapping("/refresh")
-    @Operation(summary = "Обновление токена", description = "Обновляет сессию пользователя")
-    public String refreshToken() {
-        return "{ \"token\": \"new_eyJhbG...\" }";
+    @PostMapping("/login")
+    @Operation(summary = "Вход в систему (Получение токена)")
+    public String login(
+            @Parameter(description = "Логин") @RequestParam String username,
+            @Parameter(description = "Пароль") @RequestParam String password) {
+        return userService.login(username, password);
     }
 }

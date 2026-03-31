@@ -1,30 +1,35 @@
 package com.mchs.humanitarianapi.controllers;
 
+import com.mchs.humanitarianapi.services.CalculationService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
+
+import java.math.BigDecimal;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/calculations")
-@Tag(name = "Расчет ресурсов", description = "Вычисление необходимого объема гуманитарной помощи")
+@Tag(name = "Расчеты", description = "Управление расчетами гуманитарной помощи")
 public class CalculationController {
 
-    @PostMapping("/draft")
-    @Operation(summary = "Создать черновик", description = "Инициализация нового расчета")
-    public String createDraft() {
-        return "{ \"calculation_id\": 1, \"status\": \"DRAFT\" }";
+    private final CalculationService calculationService;
+
+    public CalculationController(CalculationService calculationService) {
+        this.calculationService = calculationService;
     }
 
-    @PostMapping("/total")
-    @Operation(summary = "Рассчитать итог", description = "Умножение количества пострадавших на нормы из справочника")
-    public String calculateTotal() {
-        return "Полный расчет завершен. Транспорт: 3 Газели.";
-    }
+    @GetMapping("/preview")
+    @Operation(summary = "Полный расчет по ГОСТ (Ресурсы + Логистика)",
+            description = "Считает объем ресурсов (Q = N * q * T * K) и количество техники (M = Q / L)")
+    public Map<String, Object> previewCalculation(
+            @Parameter(description = "ID типа ЧС (1 - Наводнение)") @RequestParam Long disasterTypeId,
+            @Parameter(description = "N: Количество пострадавших") @RequestParam Integer affectedPeople,
+            @Parameter(description = "T: Период (суток)") @RequestParam Integer days,
+            @Parameter(description = "K: Климатический коэффициент") @RequestParam(required = false, defaultValue = "1.0") BigDecimal climateCoefficient,
+            @Parameter(description = "L: Вместимость грузовика (например, 1500 для Газели)") @RequestParam(required = false, defaultValue = "1500") BigDecimal truckCapacity) {
 
-    @GetMapping("/history")
-    @Operation(summary = "История расчетов", description = "Получение списка прошлых калькуляций")
-    public List<String> getHistory() {
-        return List.of("Расчет #1 (Завершен)", "Расчет #2 (В работе)");
+        return calculationService.previewCalculation(disasterTypeId, affectedPeople, days, climateCoefficient, truckCapacity);
     }
 }

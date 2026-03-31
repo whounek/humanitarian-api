@@ -4,9 +4,9 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
-@Table(name = "disaster_types")
+@Table(name = "resource_categories")
 @Data
-public class DisasterType {
+public class ResourceCategory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

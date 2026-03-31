@@ -4,13 +4,15 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
-@Table(name = "disaster_types")
+@Table(name = "shelters")
 @Data
-public class DisasterType {
+public class Shelter {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
     private String name;
+
+    private Integer capacity;
 }
