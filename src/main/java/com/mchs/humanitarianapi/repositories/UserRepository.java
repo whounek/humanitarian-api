@@ -9,4 +9,6 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
+    // Подсчет количества пользователей в конкретном регионе
+    long countByRegion(String region);
 }

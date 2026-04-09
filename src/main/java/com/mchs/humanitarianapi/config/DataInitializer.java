@@ -2,9 +2,11 @@ package com.mchs.humanitarianapi.config;
 
 import com.mchs.humanitarianapi.models.DisasterType;
 import com.mchs.humanitarianapi.models.Resource;
+import com.mchs.humanitarianapi.models.Status;
 import com.mchs.humanitarianapi.repositories.DisasterTypeRepository;
 import com.mchs.humanitarianapi.repositories.ResourceRepository;
 import com.mchs.humanitarianapi.repositories.StandardRepository;
+import com.mchs.humanitarianapi.repositories.StatusRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -15,19 +17,42 @@ public class DataInitializer implements CommandLineRunner {
 
     private final DisasterTypeRepository disasterTypeRepository;
     private final ResourceRepository resourceRepository;
-    private final StandardRepository standardRepository; // <--- Добавили сюда!
+    private final StandardRepository standardRepository;
+    private final StatusRepository statusRepository;
 
-    // И добавили в конструктор:
     public DataInitializer(DisasterTypeRepository disasterTypeRepository,
                            ResourceRepository resourceRepository,
-                           StandardRepository standardRepository) {
+                           StandardRepository standardRepository,
+                           StatusRepository statusRepository) {
         this.disasterTypeRepository = disasterTypeRepository;
         this.resourceRepository = resourceRepository;
         this.standardRepository = standardRepository;
+        this.statusRepository = statusRepository;
     }
 
     @Override
     public void run(String... args) throws Exception {
+        // Инициализация статусов документов
+        if (statusRepository.count() == 0) {
+            Status draft = new Status();
+            draft.setName("Черновик");
+
+            Status pending = new Status();
+            pending.setName("На проверке");
+
+            Status approved = new Status();
+            approved.setName("Согласовано");
+
+            Status rejected = new Status();
+            rejected.setName("Отклонено");
+
+            Status inProgress = new Status();
+            inProgress.setName("В работе"); // <--- Наш новый статус для финализации
+
+            statusRepository.saveAll(List.of(draft, pending, approved, rejected, inProgress));
+            System.out.println("✅ Базовые статусы документооборота загружены!");
+        }
+
         // Проверяем, пустая ли таблица ЧС
         if (disasterTypeRepository.count() == 0) {
             DisasterType flood = new DisasterType();

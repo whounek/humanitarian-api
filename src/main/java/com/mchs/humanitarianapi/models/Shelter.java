@@ -14,5 +14,13 @@ public class Shelter {
     @Column(nullable = false)
     private String name;
 
+    @Column(nullable = false)
     private Integer capacity;
+
+    // НОВЫЕ ПОЛЯ ДЛЯ УМНОГО ПОИСКА
+    @Column(name = "region", nullable = false)
+    private String region;
+
+    @Column(name = "address")
+    private String address;
 }

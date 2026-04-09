@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/v1.0.0_init_schema.sql
+  - include:
+      file: db/changelog/v1.0.1_insert_master_data.sql
+  - include:
+      file: db/changelog/v1.0.2_add_resource_codes.sql
+  - include:
+      file: db/changelog/v1.0.3_add_envers_audit_tables.sql

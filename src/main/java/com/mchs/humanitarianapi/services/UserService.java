@@ -10,9 +10,11 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final ActionLogService actionLogService; // Подключаем логи!
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, ActionLogService actionLogService) {
         this.userRepository = userRepository;
+        this.actionLogService = actionLogService;
     }
 
     public User registerUser(String username, String password, String fullName) {
@@ -24,32 +26,72 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public String login(String username, String password) {
+    // ИСПРАВЛЕНА КРИТИЧЕСКАЯ УЯЗВИМОСТЬ (теперь метод выбрасывает ошибку при неверном вводе)
+    public void login(String username, String password) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Ошибка: Пользователь не найден"));
+
+        if (!user.getIsActive()) {
+            throw new RuntimeException("Ошибка: Аккаунт сотрудника заблокирован (уволен/отстранен)!");
+        }
+
+        if (!user.getPassword().equals(password)) {
+            throw new RuntimeException("Ошибка: Неверный пароль");
+        }
+    }
+
+    // --- БЛОК АДМИНИСТРАТОРА ---
+
+    // Вспомогательный метод для жесткой проверки прав
+    private void checkAdminAccess(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-        // Проверяем, не заблокирован ли аккаунт
-        if (!user.getIsActive()) {
-            return "Ошибка: Аккаунт сотрудника заблокирован (уволен/отстранен)!";
+        if (!"ADMIN".equals(user.getRole())) {
+            throw new RuntimeException("ОТКАЗАНО: Доступ разрешен только СУПЕРАДМИНУ!");
         }
-
-        // Проверяем пароль
-        if (user.getPassword().equals(password)) {
-            return "Успешная авторизация. Токен доступа сгенерирован.";
-        }
-
-        return "Ошибка: Неверный пароль";
     }
 
-    public List<User> getAllUsers() {
+    public List<User> getAllUsers(String adminUsername) {
+        checkAdminAccess(adminUsername); // Проверяем, что запрашивает админ
         return userRepository.findAll();
     }
 
-    public User blockUser(Long id) {
+    public String blockUser(Long id, String adminUsername) {
+        checkAdminAccess(adminUsername);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-        user.setIsActive(false); // Мягкое удаление
-        return userRepository.save(user);
+        if ("ADMIN".equals(user.getRole())) {
+            throw new RuntimeException("ОШИБКА: Нельзя заблокировать другого суперадмина!");
+        }
+
+        // НОВАЯ ПРОВЕРКА СОСТОЯНИЯ (Идемпотентность)
+        if (!user.getIsActive()) {
+            return "Внимание: Сотрудник " + user.getUsername() + " уже был заблокирован ранее.";
+        }
+
+        user.setIsActive(false);
+        userRepository.save(user);
+
+        actionLogService.logAction(adminUsername, "Заблокировал сотрудника ID: " + id);
+        return "Сотрудник " + user.getUsername() + " успешно заблокирован.";
+    }
+
+    public String unblockUser(Long id, String adminUsername) {
+        checkAdminAccess(adminUsername);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+
+        // НОВАЯ ПРОВЕРКА СОСТОЯНИЯ (Идемпотентность)
+        if (user.getIsActive()) {
+            return "Внимание: Сотрудник " + user.getUsername() + " уже активен.";
+        }
+
+        user.setIsActive(true);
+        userRepository.save(user);
+
+        actionLogService.logAction(adminUsername, "Разблокировал сотрудника ID: " + id);
+        return "Сотрудник " + user.getUsername() + " успешно разблокирован.";
     }
 }

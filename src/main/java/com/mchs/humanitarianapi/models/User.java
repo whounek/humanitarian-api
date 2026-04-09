@@ -33,12 +33,18 @@ public class User {
     )
     private Set<Role> roles;
 
+    @Column(name = "role")
+    private String role = "OPERATOR"; // У всех по умолчанию роль Оператора
+
     // Поле для "мягкого удаления"
     @Column(name = "is_active")
     private Boolean isActive = true;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(name = "region")
+    private String region; // Например: "ЦФО", "Москва", "Урал"
 
     public Long getId() {
         return id;
@@ -103,4 +109,11 @@ public class User {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
+
+
+    public String getRegion() { return region; }
+    public void setRegion(String region) { this.region = region; }
 }

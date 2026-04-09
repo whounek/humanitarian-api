@@ -11,6 +11,10 @@ public class Resource {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Внедряем системный код. Он уникален и не может быть пустым.
+    @Column(name = "system_code", nullable = false, unique = true)
+    private String systemCode;
+
     @Column(nullable = false)
     private String name;
 
